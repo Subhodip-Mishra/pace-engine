@@ -1,0 +1,66 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://pace.dev/schemas/telemetry.schema.json",
+	"title": "PaceCanonicalTelemetryEvent",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["eventType", "timestamp", "decision", "request"],
+	"properties": {
+		"eventType": {
+			"type": "string",
+			"enum": ["decision"]
+		},
+		"timestamp": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"apiKey": {
+			"type": "string",
+			"minLength": 1
+		},
+		"sdkVersion": {
+			"type": "string",
+			"minLength": 1
+		},
+		"decision": {
+			"$ref": "./decision.schema.json"
+		},
+		"request": {
+			"type": "object",
+			"additionalProperties": false,
+			"required": ["route", "ip", "mode"],
+			"properties": {
+				"route": {
+					"type": "string",
+					"minLength": 1
+				},
+				"ip": {
+					"type": "string",
+					"minLength": 1
+				},
+				"method": {
+					"type": "string",
+					"minLength": 1
+				},
+				"statusCode": {
+					"type": "integer"
+				},
+				"latencyMs": {
+					"type": "integer",
+					"minimum": 0
+				},
+				"userAgent": {
+					"type": "string"
+				},
+				"key": {
+					"type": "string",
+					"minLength": 1
+				},
+				"mode": {
+					"type": "string",
+					"enum": ["active", "shadow"]
+				}
+			}
+		}
+	}
+}

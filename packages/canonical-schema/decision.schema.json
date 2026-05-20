@@ -1,0 +1,74 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"$id": "https://pace.dev/schemas/decision.schema.json",
+	"title": "PaceCanonicalDecision",
+	"type": "object",
+	"additionalProperties": false,
+	"required": ["decision", "reason", "algorithm", "route", "mode", "timestamp"],
+	"properties": {
+		"decision": {
+			"type": "string",
+			"enum": ["allow", "block", "would_block"]
+		},
+		"reason": {
+			"type": "string",
+			"enum": ["within_limit", "limit_exceeded", "token_exhausted"]
+		},
+		"algorithm": {
+			"type": "string",
+			"enum": ["sliding_window", "fixed_window", "token_bucket"]
+		},
+		"route": {
+			"type": "string",
+			"minLength": 1
+		},
+		"key": {
+			"type": "string",
+			"minLength": 1
+		},
+		"remaining": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"resetMs": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"latencyMs": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"mode": {
+			"type": "string",
+			"enum": ["active", "shadow"]
+		},
+		"timestamp": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"ip": {
+			"type": "string",
+			"minLength": 1,
+			"description": "Optional transport field for request source attribution"
+		},
+		"window": {
+			"type": "string"
+		},
+		"limit": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"capacity": {
+			"type": "integer",
+			"minimum": 0
+		},
+		"refillRate": {
+			"type": "number",
+			"minimum": 0
+		},
+		"refillMs": {
+			"type": "integer",
+			"minimum": 0
+		}
+	}
+}

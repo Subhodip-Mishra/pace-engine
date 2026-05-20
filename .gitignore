@@ -1,0 +1,39 @@
+# Dependencies
+node_modules
+.venv
+
+# Build output
+.next
+dist
+build
+coverage
+target
+.turbo
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# Python
+__pycache__
+*.pyc
+
+# IDE
+.vscode
+.idea
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary
+tmp
+temp
+
+# Ignore unfinished apps
+pace-docs
+pace-cloud
