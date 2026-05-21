@@ -11,7 +11,8 @@ pub struct NodeConfig {
     pub capacity: Option<f64>,
     pub refill_rate: Option<f64>,
     pub api_key: Option<String>,
-    pub debug: Option<bool>,
+    // FIXED: Changed from Option<bool> to Option<String> to accept "compact" | "pretty"
+    pub debug: Option<String>, 
     pub backend_url: Option<String>,
     pub requests_per_minute: Option<f64>,
     pub requests_per_second: Option<f64>,
@@ -42,7 +43,6 @@ impl PaceNode {
         let mode = config.mode.unwrap_or_else(|| "active".to_string());
         let capacity = config.capacity.unwrap_or(100.0);
         let refill_rate = config.refill_rate.unwrap_or(10.0);
-        let debug = config.debug.unwrap_or(false);
         let backend_url = config
             .backend_url
             .unwrap_or_else(|| "http://localhost:4000".to_string());
@@ -64,7 +64,7 @@ impl PaceNode {
             capacity,
             refill_rate,
             config.api_key,
-            debug,
+            config.debug, // FIXED: Pass the Option<String> directly
             rules,
             thresholds,
             backend_url,

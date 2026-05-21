@@ -27,20 +27,31 @@ impl LeakyBucket {
     }
 
     pub fn check(&self, key: &str) -> AlgorithmEvaluation {
+        // 1. Lock first and defer time calculation
+        let mut entry = self
+            .buckets
+            .entry(key.to_string())
+            .or_insert_with(|| Bucket {
+                water_level: 0.0,
+                last_leak: SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_millis() as u64,
+            });
+
+        // 2. Fetch time strictly inside the lock
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_millis() as u64;
 
-        let mut entry = self.buckets.entry(key.to_string()).or_insert(Bucket {
-            water_level: 0.0,
-            last_leak: now,
-        });
-
-        let elapsed_secs = (now - entry.last_leak) as f64 / 1000.0;
+        // 3. Saturating sub to prevent underflow panic
+        let elapsed_secs = now.saturating_sub(entry.last_leak) as f64 / 1000.0;
         let leaked = elapsed_secs * self.leak_rate;
         entry.water_level = (entry.water_level - leaked).max(0.0);
-        entry.last_leak = now;
+
+        // 4. Prevent backward time travel
+        entry.last_leak = now.max(entry.last_leak);
 
         if entry.water_level < self.capacity {
             entry.water_level += 1.0;
@@ -50,7 +61,10 @@ impl LeakyBucket {
                 remaining: Some((self.capacity - entry.water_level).floor().max(0.0) as u64),
                 reset_ms: None,
                 refill_ms: None,
-                debug_info: format!("{:.0} bucket space remaining", self.capacity - entry.water_level),
+                debug_info: format!(
+                    "{:.0} bucket space remaining",
+                    self.capacity - entry.water_level
+                ),
             }
         } else {
             AlgorithmEvaluation {

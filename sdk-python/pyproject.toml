@@ -1,0 +1,17 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "pace-sdk"
+version = "1.0.0"
+description = "Rust-powered rate limiting SDK for Python"
+requires-python = ">=3.8"
+dependencies = ["requests>=2.28.0"]
+
+[project.optional-dependencies]
+flask = ["flask>=2.0"]
+fastapi = ["fastapi>=0.95", "starlette>=0.27"]
+
+[tool.maturin]
+module-name = "pace_sdk.pace_native"

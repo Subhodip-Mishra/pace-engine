@@ -27,22 +27,33 @@ impl FixedWindow {
     }
 
     pub fn check(&self, key: &str) -> AlgorithmEvaluation {
+        // 1. Lock first and defer
+        let mut entry = self
+            .windows
+            .entry(key.to_string())
+            .or_insert_with(|| Window {
+                count: 0,
+                window_start: SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_millis() as u64,
+            });
+
+        // 2. Fetch time inside the lock
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_millis() as u64;
 
-        let mut entry = self.windows.entry(key.to_string()).or_insert(Window {
-            count: 0,
-            window_start: now,
-        });
-
-        if now - entry.window_start >= self.window_ms {
+        // 3. Prevent underflow panic
+        if now.saturating_sub(entry.window_start) >= self.window_ms {
             entry.count = 0;
             entry.window_start = now;
         }
 
-        let reset_ms = self.window_ms.saturating_sub(now - entry.window_start);
+        let reset_ms = self
+            .window_ms
+            .saturating_sub(now.saturating_sub(entry.window_start));
 
         if entry.count < self.max_requests {
             entry.count += 1;

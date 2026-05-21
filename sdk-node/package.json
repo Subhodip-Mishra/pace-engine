@@ -1,29 +1,24 @@
 {
-  "name": "@pace/sdk",
+  "name": "@pace/sdk-node",
   "version": "1.0.0",
-  "description": "",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "directories": {
-    "lib": "lib"
-  },
+  "files": ["dist"],
+
   "scripts": {
-    "build": "tsc && node-gyp rebuild",
+    "build": "tsc",
     "benchmark": "node dist/benchmark.js"
-  },
+  },  
+
   "bin": {
     "pace": "./dist/cli/simulate.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "gypfile": true,
+
   "dependencies": {
     "@grpc/grpc-js": "^1.14.3",
-    "@grpc/proto-loader": "^0.8.0",
-    "node-addon-api": "^8.7.0",
-    "path": "^0.12.7"
+    "@grpc/proto-loader": "^0.8.0"
   },
+
   "devDependencies": {
     "@types/node": "^25.6.0",
     "ts-node": "^10.9.2",

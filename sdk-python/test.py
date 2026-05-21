@@ -1,20 +1,28 @@
-import pace_native
 import time
+from pace_sdk.client import Pace
+from pace_sdk.types import PaceConfig, ProtectionMode, Algorithm
 
-BATCH_SIZE = 1_000_000
-IPS = ["192.168.1.1"] * BATCH_SIZE
-CAP = 1_000_000
-RATE = 100_000
-ORG_ID = "org_dev_123"
+config = PaceConfig(
+    mode=ProtectionMode.ACTIVE,
+    algorithm=Algorithm.TOKEN_BUCKET,
+    capacity=3,       
+    refill_rate=1.0,
+    debug="pretty" # Note: printing 100 times in 'pretty' mode is very slow!
+)
 
-start = time.perf_counter()
-_ = pace_native.check_batch(IPS, CAP, RATE, ORG_ID)
-end = time.perf_counter()
+pace = Pace(config)
 
-total_seconds = end - start
-ops_per_sec = int(BATCH_SIZE / total_seconds)
+print("\n--- Starting Traffic ---")
 
-print("-" * 40)
-print(f"Total Seconds: {total_seconds:.4f}")
-print(f"Requests/Sec : {ops_per_sec:,}")
-print("-" * 40)
+# Start the timer
+start_total = time.perf_counter()
+
+for i in range(10000):
+    result = pace.check(ip="127.0.0.1", route="/generate")
+
+# Stop the timer
+end_total = time.perf_counter()
+
+total_duration = end_total - start_total
+print(f"\n✅ Processed 100 requests in {total_duration:.4f} seconds")
+print(f"🚀 Average time per request: {(total_duration/10000)*1000:.4f} ms")

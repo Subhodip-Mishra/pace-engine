@@ -3,7 +3,7 @@ import { startHeartbeat } from "./heartbeat";
 import { runtimeMetrics } from "./runtime/metrics";
 import { sendRuntimeMetrics } from "./runtime/sendRuntimeMetrics";
 import { enqueueTelemetry } from "./telemetry/telemetry-queue";
-import { createPaceLogger, shouldIgnoreRoute, writeBootstrapLog, normalizeDebugMode, LogMode } from "./core/logger";
+import { createPaceLogger, shouldIgnoreRoute, writeBootstrapLog, normalizeDebugMode } from "./core/logger";
 import { evaluateLimitDecision, type LimitStateStore } from "./core/decision";
 
 const path = require("path");
@@ -17,9 +17,9 @@ try {
   if (process.env.PACE_DEBUG === "true") {
     writeBootstrapLog("[Pace] ⚡ Rust engine loaded");
   }
-} catch {
+} catch (e){
   // Rust engine not found — use JS fallback only
-  console.warn("[Pace] Rust engine not found, using JS fallback");
+  console.warn("[Pace] Rust engine not found, using JS fallback. Reason:", e);
 }
 
 export class Pace {
@@ -61,11 +61,12 @@ export class Pace {
     };
   }
 
-  constructor(options?: PaceConfig) {
+ constructor(options?: PaceConfig) {
     this.options = options;
-    const logMode: LogMode = normalizeDebugMode(options?.debug);
-    this.logger = createPaceLogger(logMode);
-
+    
+    // 1. UPDATED: Pass only the single debug property
+    this.logger = createPaceLogger(options?.debug);
+    
     // Periodic cleanup of stale limiter state to avoid unbounded memory growth
     const TTL_MS = 15 * 60 * 1000; // 15 minutes
     const CLEANUP_INTERVAL_MS = 60 * 1000; // 1 minute
@@ -85,7 +86,7 @@ export class Pace {
       }
     }, CLEANUP_INTERVAL_MS);
 
-    // Initialize Rust engine if available
+    // 2. UPDATED: Initialize Rust engine with the new string debug field
     if (this.native?.PaceNode) {
       this.nativeEngine = new this.native.PaceNode({
         algorithm: "token_bucket",
@@ -93,7 +94,7 @@ export class Pace {
         capacity: 100,
         refillRate: 10,
         apiKey: options?.apiKey,
-        debug: options?.debug || false,
+        debug: options?.debug, // <--- Passes "compact", "pretty", or undefined
       });
     }
 

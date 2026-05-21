@@ -2,7 +2,7 @@ export type ProtectionMode = "active" | "shadow" | "disabled";
 
 export type Algorithm = "token_bucket" | "sliding_window" | "fixed_window";
 
-export type DebugMode = boolean | "compact" | "pretty";
+export type DebugMode = "compact" | "pretty";
 
 export type TrafficDecision = "allow" | "block" | "would_block";
 

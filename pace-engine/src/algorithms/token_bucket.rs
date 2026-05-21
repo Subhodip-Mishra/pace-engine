@@ -27,20 +27,30 @@ impl TokenBucket {
     }
 
     pub fn check(&self, key: &str) -> AlgorithmEvaluation {
+        // 1. Lock first, and defer the creation logic so `now` is perfectly accurate on init
+        let mut entry = self
+            .buckets
+            .entry(key.to_string())
+            .or_insert_with(|| Bucket {
+                tokens: self.capacity,
+                last_refill: SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_millis() as u64,
+            });
+
+        // 2. Fetch time strictly AFTER acquiring the shard lock
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_millis() as u64;
 
-        let mut entry = self.buckets.entry(key.to_string()).or_insert(Bucket {
-            tokens: self.capacity,
-            last_refill: now,
-        });
-
-        let elapsed_secs = (now - entry.last_refill) as f64 / 1000.0;
+        // 3. Prevent underflow crashes using saturating_sub
+        let elapsed_secs = now.saturating_sub(entry.last_refill) as f64 / 1000.0;
         let new_tokens = (entry.tokens + elapsed_secs * self.refill_rate).min(self.capacity);
 
-        entry.last_refill = now;
+        // 4. Ensure time never moves backward in state
+        entry.last_refill = now.max(entry.last_refill);
 
         if new_tokens >= 1.0 {
             entry.tokens = new_tokens - 1.0;

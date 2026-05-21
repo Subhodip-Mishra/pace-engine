@@ -655,7 +655,6 @@ dependencies = [
  "napi-derive",
  "napi-sys",
  "once_cell",
- "tokio",
 ]
 
 [[package]]
@@ -779,7 +778,7 @@ dependencies = [
 
 [[package]]
 name = "pace-engine"
-version = "0.1.0"
+version = "1.0.0"
 dependencies = [
  "chrono",
  "dashmap",

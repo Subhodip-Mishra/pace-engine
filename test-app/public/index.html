@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Pace Test</title>
+</head>
+<body>
+  <button id="generate" class="hover:cursor-pointer">
+    Generate AI Response
+  </button>
+
+  <p id="status"></p>
+
+  <script>
+    const button = document.getElementById("generate");
+    const status = document.getElementById("status");
+
+    button.onclick = async () => {
+      status.innerText = "Loading...";
+
+      try {
+        const res = await fetch("/generate", {
+          method: "POST",
+        });
+
+        const data = await res.json();
+
+        status.innerText =
+          JSON.stringify(data, null, 2);
+      } catch (err) {
+        status.innerText = "Request failed";
+      }
+    };
+  </script>
+</body>
+</html>

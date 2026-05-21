@@ -22,17 +22,20 @@ impl SlidingWindow {
     }
 
     pub fn check(&self, key: &str) -> AlgorithmEvaluation {
+        // 1. Lock first
+        let mut entry = self
+            .windows
+            .entry(key.to_string())
+            .or_insert_with(VecDeque::new);
+
+        // 2. Fetch time inside the lock
         let now = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
             .as_millis() as u64;
 
-        let window_start = now - self.window_ms;
-
-        let mut entry = self
-            .windows
-            .entry(key.to_string())
-            .or_insert(VecDeque::new());
+        // 3. Saturating sub for window boundary
+        let window_start = now.saturating_sub(self.window_ms);
 
         while let Some(&front) = entry.front() {
             if front < window_start {
@@ -41,7 +44,6 @@ impl SlidingWindow {
                 break;
             }
         }
-
         let current_count = entry.len() as u64;
         let reset_ms = entry
             .front()
@@ -55,7 +57,10 @@ impl SlidingWindow {
                 remaining: Some(self.max_requests - current_count - 1),
                 reset_ms,
                 refill_ms: None,
-                debug_info: format!("{} requests remaining", self.max_requests - current_count - 1),
+                debug_info: format!(
+                    "{} requests remaining",
+                    self.max_requests - current_count - 1
+                ),
             }
         } else {
             AlgorithmEvaluation {

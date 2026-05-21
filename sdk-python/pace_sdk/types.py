@@ -1,13 +1,11 @@
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, Union
 from enum import Enum
-
 
 class ProtectionMode(str, Enum):
     ACTIVE = "active"
     SHADOW = "shadow"
     DISABLED = "disabled"
-
 
 class Algorithm(str, Enum):
     TOKEN_BUCKET = "token_bucket"
@@ -15,24 +13,17 @@ class Algorithm(str, Enum):
     FIXED_WINDOW = "fixed_window"
     LEAKY_BUCKET = "leaky_bucket"
 
-
 class TrafficDecision(str, Enum):
     ALLOW = "allow"
     BLOCK = "block"
     WOULD_BLOCK = "would_block"
-
 
 class DecisionReason(str, Enum):
     WITHIN_LIMIT = "within_limit"
     LIMIT_EXCEEDED = "limit_exceeded"
     TOKEN_EXHAUSTED = "token_exhausted"
 
-
-class LogMode(str, Enum):
-    OFF = "off"
-    COMPACT = "compact"
-    PRETTY = "pretty"
-
+# REMOVED: LogMode Enum is no longer needed!
 
 @dataclass
 class CanonicalDecision:
@@ -53,7 +44,6 @@ class CanonicalDecision:
     refill_rate: Optional[float] = None
     refill_ms: Optional[int] = None
 
-
 @dataclass
 class CanonicalTelemetryRequest:
     route: str
@@ -65,7 +55,6 @@ class CanonicalTelemetryRequest:
     key: Optional[str] = None
     mode: ProtectionMode = ProtectionMode.ACTIVE
 
-
 @dataclass
 class CanonicalTelemetryEvent:
     event_type: str
@@ -75,19 +64,16 @@ class CanonicalTelemetryEvent:
     api_key: Optional[str] = None
     sdk_version: Optional[str] = None
 
-
 @dataclass
 class Rules:
     requests_per_minute: Optional[int] = None
     requests_per_second: Optional[int] = None
     burst_limit: Optional[int] = None
 
-
 @dataclass
 class Thresholds:
     burst: int = 20
     block_duration_ms: int = 60000
-
 
 @dataclass
 class PaceConfig:
@@ -96,13 +82,12 @@ class PaceConfig:
     algorithm: Algorithm = Algorithm.TOKEN_BUCKET
     capacity: int = 100
     refill_rate: int = 10
-    debug: bool = False
-    log_mode: LogMode = LogMode.OFF
+    # Unified debug setting: False, True, "compact", or "pretty"
+    debug: Union[bool, str] = False
     identity_header: Optional[str] = None
     backend_url: str = "http://localhost:4000"
     rules: Rules = field(default_factory=Rules)
     thresholds: Thresholds = field(default_factory=Thresholds)
-
 
 @dataclass
 class CheckResult:

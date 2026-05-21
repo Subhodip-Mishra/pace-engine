@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { createPaceLogger, shouldIgnoreRoute } from "./logger";
 import type { NormalizedLimitDecision } from "../types/config";
+import { debug } from "node:util";
 
 function captureStdout(run: () => void): string {
   const originalWrite = process.stdout.write.bind(process.stdout);

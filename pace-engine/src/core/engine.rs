@@ -46,7 +46,7 @@ pub struct PaceEngine {
     thresholds: Thresholds,
     telemetry: TelemetryQueue,
     api_key: Option<String>,
-    debug: bool,
+    debug: Option<String>,
 }
 
 impl PaceEngine {
@@ -57,7 +57,7 @@ impl PaceEngine {
         capacity: f64,
         refill_rate: f64,
         api_key: Option<String>,
-        debug: bool,
+        debug: Option<String>,
         rules: Rules,
         thresholds: Thresholds,
         backend_url: String,
@@ -137,17 +137,20 @@ impl PaceEngine {
             DecisionReason::TokenExhausted => "token_exhausted".to_string(),
         });
 
-        if self.debug {
-            println!(
-                "[Pace] {} | IP: {} | {} | Mode: {} | {} | {}",
-                route,
-                ip,
-                if would_block { "BLOCK" } else { "ALLOW" },
-                self.mode.as_str(),
-                self.algorithm_name,
-                evaluation.debug_info
-            );
-        }
+        // FIXED: Log after evaluation is calculated, and use the new string logic
+        // if let Some(ref mode) = self.debug {
+        //     if mode == "compact" || mode == "pretty" {
+        //         println!(
+        //             "[Pace-Core] {} | IP: {} | {} | Mode: {} | {} | {}",
+        //             route,
+        //             ip,
+        //             if would_block { "BLOCK" } else { "ALLOW" },
+        //             self.mode.as_str(),
+        //             self.algorithm_name,
+        //             evaluation.debug_info
+        //         );
+        //     }
+        // }
 
         let now_ms = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
@@ -179,7 +182,7 @@ impl PaceEngine {
             self.telemetry.push(CanonicalTelemetryEvent {
                 event_type: "decision".to_string(),
                 timestamp: canonical_decision.timestamp,
-                api_key: api_key.clone(),
+                api_key: Some(api_key.clone()), // FIXED for Option wrapper
                 sdk_version: None,
                 decision: canonical_decision.clone(),
                 request: CanonicalRequestMetadata {
@@ -187,8 +190,8 @@ impl PaceEngine {
                     ip: ip.to_string(),
                     mode: self.mode.as_str().to_string(),
                     method: None,
-                    status_code: if !allowed { 429 } else { 200 },
-                    latency_ms: latency,
+                    status_code: Some(if !allowed { 429 } else { 200 }), // FIXED for Option wrapper
+                    latency_ms: Some(latency), // FIXED for Option wrapper
                     user_agent: None,
                     key: identity.map(|v| v.to_string()),
                 },
