@@ -37,3 +37,7 @@ temp
 # Ignore unfinished apps
 pace-docs
 pace-cloud
+pace-docs
+pace-cloud
+sdk-go/
+sdk-rust/
