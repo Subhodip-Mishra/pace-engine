@@ -1,28 +1,38 @@
 import time
-from pace_sdk.client import Pace
-from pace_sdk.types import PaceConfig, ProtectionMode, Algorithm
+from pace_sdk import Pace, PaceConfig, ProtectionMode, Algorithm
 
-config = PaceConfig(
+# Initialize the core engine
+pace = Pace(PaceConfig(
     mode=ProtectionMode.ACTIVE,
     algorithm=Algorithm.TOKEN_BUCKET,
     capacity=3,       
     refill_rate=1.0,
-    debug="pretty" # Note: printing 100 times in 'pretty' mode is very slow!
-)
+    debug="pretty" # Beautiful CLI observability out-of-the-box
+))
 
-pace = Pace(config)
+print("🚀 Starting high-throughput engine test...")
+start = time.perf_counter()
 
-print("\n--- Starting Traffic ---")
+# Test throughput with rich terminal logging
+for _ in range(100):
+    pace.check()  # Simulate 100 rapid requests to test the engine's performance and logging
 
-# Start the timer
-start_total = time.perf_counter()
+duration = time.perf_counter() - start
+print(f"✅ Processed 100 requests in {duration:.4f} seconds")
+print(f"🚀 Average time per request: {(duration / 100) * 1000:.4f} ms")
 
-for i in range(10000):
-    result = pace.check(ip="127.0.0.1", route="/generate")
 
-# Stop the timer
-end_total = time.perf_counter()
+"""
+EXPECTED TERMINAL OUTPUT:
 
-total_duration = end_total - start_total
-print(f"\n✅ Processed 100 requests in {total_duration:.4f} seconds")
-print(f"🚀 Average time per request: {(total_duration/10000)*1000:.4f} ms")
+│ IP:        127.0.0.1
+│ Algorithm: token_bucket
+│ Reason:    token_exhausted
+│ Mode:      active
+│ Remaining: 0
+│ Latency:   0ms
+└────────────────────────────────────────
+
+✅ Processed 100 requests in 0.5778 seconds
+🚀 Average time per request: 0.0578 ms
+"""

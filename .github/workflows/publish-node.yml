@@ -1,9 +1,9 @@
-name: Build and Publish
+name: Build and Publish Node SDK
 
 on:
   push:
     tags:
-      - 'v*'
+      - 'v*-node' # <-- ONLY triggers when tag ends in "-node"
 
 jobs:
   build:
@@ -29,8 +29,10 @@ jobs:
         with:
           targets: ${{ matrix.target }}
       - run: npm install -g @napi-rs/cli
+      
       - run: napi build --platform --release --target ${{ matrix.target }}
         working-directory: pace-engine
+        
       - uses: actions/upload-artifact@v4
         with:
           name: binaries-${{ matrix.target }}
@@ -41,11 +43,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
       - uses: actions/download-artifact@v4
+        with:
+          path: sdk-node/ # <-- Ensure binaries download into the SDK folder
+          merge-multiple: true 
+          
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           registry-url: 'https://registry.npmjs.org'
+          
       - run: npm publish
         working-directory: sdk-node
         env:

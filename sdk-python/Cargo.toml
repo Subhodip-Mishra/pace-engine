@@ -8,5 +8,6 @@ name = "pace_native"
 crate-type = ["cdylib"]
 
 [dependencies]
-pyo3 = { version = "0.20.2", features = ["extension-module"] }
+# Added abi3 and abi3-py38 to guarantee compatibility with all modern Python versions (including 3.14)
+pyo3 = { version = "0.20.3", features = ["extension-module", "abi3", "abi3-py38"] }
 pace-engine = { path = "../pace-engine" }

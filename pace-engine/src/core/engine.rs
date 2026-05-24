@@ -1,8 +1,14 @@
-use crate::algorithms::{Algorithm, AlgorithmType, FixedWindow, LeakyBucket, SlidingWindow, TokenBucket};
-use crate::core::canonical::{AlgorithmEvaluation, CanonicalDecision, CanonicalRequestMetadata, CanonicalTelemetryEvent, DecisionReason, TrafficDecision};
+use crate::algorithms::{
+    Algorithm, AlgorithmType, FixedWindow, LeakyBucket, SlidingWindow, TokenBucket,
+};
+use crate::core::canonical::{
+    AlgorithmEvaluation, CanonicalDecision, CanonicalRequestMetadata, CanonicalTelemetryEvent,
+    DecisionReason, TrafficDecision,
+};
 use crate::core::rules::Rules;
 use crate::core::thresholds::Thresholds;
 use crate::telemetry::queue::TelemetryQueue;
+use std::sync::Mutex;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum ProtectionMode {
@@ -39,7 +45,7 @@ pub struct CheckResult {
 }
 
 pub struct PaceEngine {
-    algorithm: Algorithm,
+    algorithm: Mutex<Algorithm>,
     algorithm_name: String,
     mode: ProtectionMode,
     rules: Rules,
@@ -66,16 +72,24 @@ impl PaceEngine {
         let enabled = api_key.is_some();
 
         let algorithm = match algorithm_type {
-            AlgorithmType::TokenBucket => Algorithm::TokenBucket(TokenBucket::new(capacity, refill_rate)),
-            AlgorithmType::SlidingWindow => Algorithm::SlidingWindow(SlidingWindow::new(60000, capacity as u64)),
-            AlgorithmType::FixedWindow => Algorithm::FixedWindow(FixedWindow::new(60000, capacity as u64)),
-            AlgorithmType::LeakyBucket => Algorithm::LeakyBucket(LeakyBucket::new(capacity, refill_rate)),
+            AlgorithmType::TokenBucket => {
+                Algorithm::TokenBucket(TokenBucket::new(capacity, refill_rate))
+            }
+            AlgorithmType::SlidingWindow => {
+                Algorithm::SlidingWindow(SlidingWindow::new(60000, capacity as u64))
+            }
+            AlgorithmType::FixedWindow => {
+                Algorithm::FixedWindow(FixedWindow::new(60000, capacity as u64))
+            }
+            AlgorithmType::LeakyBucket => {
+                Algorithm::LeakyBucket(LeakyBucket::new(capacity, refill_rate))
+            }
         };
 
         let telemetry = TelemetryQueue::new(backend_url, enabled);
 
         Self {
-            algorithm,
+            algorithm: Mutex::new(algorithm),
             algorithm_name: algorithm_str.to_string(),
             mode: ProtectionMode::from_str(mode_str),
             rules,
@@ -122,7 +136,7 @@ impl PaceEngine {
         let _ = (&self.rules, &self.thresholds);
 
         let identity_key = identity.unwrap_or(ip);
-        let evaluation: AlgorithmEvaluation = self.algorithm.check(identity_key);
+        let evaluation: AlgorithmEvaluation = self.algorithm.lock().unwrap().check(identity_key);
         let would_block = !evaluation.allowed;
 
         let allowed = match self.mode {
@@ -191,7 +205,7 @@ impl PaceEngine {
                     mode: self.mode.as_str().to_string(),
                     method: None,
                     status_code: Some(if !allowed { 429 } else { 200 }), // FIXED for Option wrapper
-                    latency_ms: Some(latency), // FIXED for Option wrapper
+                    latency_ms: Some(latency),                           // FIXED for Option wrapper
                     user_agent: None,
                     key: identity.map(|v| v.to_string()),
                 },
