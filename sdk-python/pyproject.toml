@@ -3,8 +3,8 @@ requires = ["maturin>=1.0,<2.0"]
 build-backend = "maturin"
 
 [project]
-name = "pace-sdk"
-version = "1.0.0"
+name = "pace-python"
+version = "1.0.1"
 description = "Rust-powered rate limiting SDK for Python"
 requires-python = ">=3.8"
 dependencies = ["requests>=2.28.0"]
