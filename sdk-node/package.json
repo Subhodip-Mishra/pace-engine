@@ -1,27 +1,14 @@
 {
-  "name": "@pace/sdk-node",
-  "version": "1.0.0",
+  "name": "pace-sdk-node",
+  "version": "1.0.3",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist"],
-
+  "files": ["dist", "*.node"],
   "scripts": {
-    "build": "tsc",
-    "benchmark": "node dist/benchmark.js"
-  },  
-
-  "bin": {
-    "pace": "./dist/cli/simulate.js"
+    "build": "tsc"
   },
-
-  "dependencies": {
-    "@grpc/grpc-js": "^1.14.3",
-    "@grpc/proto-loader": "^0.8.0"
-  },
-
   "devDependencies": {
     "@types/node": "^25.6.0",
-    "ts-node": "^10.9.2",
     "typescript": "^6.0.3"
   }
 }
