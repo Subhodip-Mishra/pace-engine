@@ -6,6 +6,8 @@ build-backend = "maturin"
 name = "pace-python"
 version = "1.0.1"
 description = "Rust-powered rate limiting SDK for Python"
+readme = "README.md"
+license = "MIT"
 requires-python = ">=3.8"
 dependencies = ["requests>=2.28.0"]
 
