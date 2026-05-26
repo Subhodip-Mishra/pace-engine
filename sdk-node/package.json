@@ -1,9 +1,15 @@
 {
-  "name": "pace-sdk-node",
+  "name": "pace-node",
   "version": "1.0.3",
+  "description": "High-performance, Rust-powered rate limiting SDK for Node.js",
+  "author": "Suvodeep Mishra",
+  "license": "Apache-2.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist", "*.node"],
+  "files": [
+    "dist",
+    "*.node"
+  ],
   "scripts": {
     "build": "tsc"
   },

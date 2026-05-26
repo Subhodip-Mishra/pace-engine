@@ -263,4 +263,4 @@ print(result.decision.reason)
 
 ## License
 
-Add your license information here if the project is distributed publicly.
+This project is licensed under the Apache License, Version 2.0. See the [LICENSE](../LICENSE) file for more details.
