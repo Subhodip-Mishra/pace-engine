@@ -1,6 +1,6 @@
 export type ProtectionMode = "active" | "shadow" | "disabled";
 
-export type Algorithm = "token_bucket" | "sliding_window" | "fixed_window";
+export type Algorithm = "token_bucket" | "sliding_window" | "fixed_window" | "leaky_bucket";
 
 export type DebugMode = "compact" | "pretty";
 
@@ -34,18 +34,19 @@ export interface CanonicalDecision {
 }
 
 export interface CanonicalTelemetryRequest {
+  requestId: string;
   route: string;
   ip: string;
-  method?: string;
-  statusCode?: number;
-  latencyMs?: number;
-  userAgent?: string;
+  method: string;
+  statusCode: number;
+  latencyMs: number;
+  userAgent: string;
   key?: string;
   mode: ProtectionMode;
 }
 
 export interface CanonicalTelemetryEvent {
-  eventType: "decision";
+  eventType: "decision" | "heartbeat";
   timestamp: number;
   apiKey?: string;
   sdkVersion?: string;
@@ -76,6 +77,13 @@ export type SlidingWindowConfig = {
   key?: (req: any) => string;
 };
 
-export type PaceLimitConfig = TokenBucketConfig | FixedWindowConfig | SlidingWindowConfig;
+export type LeakyBucketConfig = {
+  algorithm: "leaky_bucket";
+  capacity: number;
+  refillRate: number;
+  key?: (req: any) => string;
+};
+
+export type PaceLimitConfig = TokenBucketConfig | FixedWindowConfig | SlidingWindowConfig | LeakyBucketConfig;
 
 export type NormalizedLimitDecision = CanonicalDecision;

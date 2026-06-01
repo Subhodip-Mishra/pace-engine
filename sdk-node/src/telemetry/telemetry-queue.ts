@@ -6,6 +6,8 @@ const queue: CanonicalTelemetryEvent[] = [];
 const MAX_QUEUE_SIZE = 10000;  // ← ADD
 
 export function enqueueTelemetry(event: CanonicalTelemetryEvent) {
+  if (!event.apiKey) return;
+  
   if (queue.length >= MAX_QUEUE_SIZE) {
     queue.shift();
   }

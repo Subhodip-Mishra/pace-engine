@@ -16,20 +16,44 @@ export function paceNext(pace: Pace, config: PaceLimitConfig) {
     const url = new URL(req.url);
     const route = url.pathname;
 
+    // ADD THIS — was missing
+    if (shouldIgnoreRoute(route)) return null;
+
     const result = pace.check(ip, route, config);
 
     if (!result.allowed) {
       runtimeMetrics.blocked++;
       runtimeMetrics.requests++;
-      if (pace["isConnected"]()) enqueueTelemetry(pace.buildTelemetryEvent({ decision: result, req: { method: req.method, headers: Object.fromEntries(req.headers) }, resStatusCode: 429, mode: pace["getMode"](), ip, route }));
-      return new Response(JSON.stringify({ error: "Too Many Requests" }), { status: 429, headers: { "Content-Type": "application/json" } });
+      if (pace.isConnected()) {
+        enqueueTelemetry(pace.buildTelemetryEvent({
+          decision: result,
+          req: { method: req.method, headers: Object.fromEntries(req.headers) },
+          resStatusCode: 429,
+          mode: pace.getMode(),
+          ip,
+          route,
+        }));
+      }
+      return new Response(JSON.stringify({ error: "Too Many Requests" }), {
+        status: 429,
+        headers: { "Content-Type": "application/json" },
+      });
     }
-    
-    // Note: Next.js edge/serverless tracking fires immediately as there is no universal res.on("finish")
+
     runtimeMetrics.requests++;
-  runtimeMetrics.totalLatency += (result.latencyMs ?? 0);
-    if (pace["isConnected"]()) enqueueTelemetry(pace.buildTelemetryEvent({ decision: result, req: { method: req.method, headers: Object.fromEntries(req.headers) }, resStatusCode: 200, mode: pace["getMode"](), ip, route }));
-    
-    return null; // Returns null if allowed, allowing the route to proceed
+    runtimeMetrics.totalLatency += result.latencyMs ?? 0;
+
+    if (pace.isConnected()) {
+      enqueueTelemetry(pace.buildTelemetryEvent({
+        decision: result,
+        req: { method: req.method, headers: Object.fromEntries(req.headers) },
+        resStatusCode: 200,
+        mode: pace.getMode(),
+        ip,
+        route,
+      }));
+    }
+
+    return null;
   };
 }

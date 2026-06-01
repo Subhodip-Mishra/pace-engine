@@ -4,11 +4,19 @@
 	"title": "PaceCanonicalTelemetryEvent",
 	"type": "object",
 	"additionalProperties": false,
-	"required": ["eventType", "timestamp", "decision", "request"],
+	"required": [
+		"eventType",
+		"timestamp",
+		"decision",
+		"request"
+	],
 	"properties": {
 		"eventType": {
 			"type": "string",
-			"enum": ["decision"]
+			"enum": [
+				"decision",
+				"heartbeat"
+			]
 		},
 		"timestamp": {
 			"type": "integer",
@@ -28,11 +36,23 @@
 		"request": {
 			"type": "object",
 			"additionalProperties": false,
-			"required": ["route", "ip", "mode"],
+			"required": [
+				"route",
+				"ip",
+				"mode",
+				"method",
+				"statusCode",
+				"latencyMs",
+				"userAgent"
+			],
 			"properties": {
 				"route": {
 					"type": "string",
 					"minLength": 1
+				},
+				"requestId": {
+					"type": "string",
+					"description": "UUID per request for ClickHouse deduplication"
 				},
 				"ip": {
 					"type": "string",
@@ -58,7 +78,10 @@
 				},
 				"mode": {
 					"type": "string",
-					"enum": ["active", "shadow"]
+					"enum": [
+						"active",
+						"shadow"
+					]
 				}
 			}
 		}

@@ -4,7 +4,7 @@
 from .core import Pace
 
 # 2. Export the Types
-from .types import PaceConfig, ProtectionMode, Algorithm
+from .types import PaceConfig, ProtectionMode, Algorithm, LeakyBucketConfig
 
 # 3. Export the Framework Helpers
 from .helpers import PaceFastAPI, pace_django
@@ -15,6 +15,7 @@ __all__ = [
     "PaceConfig",
     "ProtectionMode",
     "Algorithm",
+    "LeakyBucketConfig",
     "PaceFastAPI",
     "pace_django"
 ]

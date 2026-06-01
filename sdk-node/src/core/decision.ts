@@ -1,5 +1,6 @@
 import type {
   Algorithm,
+  LeakyBucketConfig,
   FixedWindowConfig,
   DecisionReason,
   NormalizedLimitDecision,
@@ -22,9 +23,16 @@ export interface FixedWindowState {
   lastSeenMs?: number;
 }
 
+export interface LeakyBucketState {
+  waterLevel: number;
+  lastLeakMs: number;
+  lastSeenMs?: number;
+}
+
 export interface LimitStateStore {
   tokenBuckets: Map<string, TokenBucketState>;
   fixedWindows: Map<string, FixedWindowState>;
+  leakyBuckets: Map<string, LeakyBucketState>;
   slidingWindows: Map<string, { timestamps: number[]; lastSeenMs?: number }>;
 }
 
@@ -100,6 +108,10 @@ export function evaluateLimitDecision(
 ): NormalizedLimitDecision {
   if (config.algorithm === "token_bucket") {
     return evaluateTokenBucket(config, context, store);
+  }
+
+  if (config.algorithm === "leaky_bucket") {
+    return evaluateLeakyBucket(config, context, store);
   }
 
   if (config.algorithm === "fixed_window") {
@@ -206,6 +218,58 @@ function evaluateFixedWindow(
   return buildDecision(config, context, false, "limit_exceeded", 0, resetMs, undefined, {
     window: config.window,
     limit: config.limit,
+  });
+}
+
+function evaluateLeakyBucket(
+  config: LeakyBucketConfig,
+  context: LimitContext,
+  store: LimitStateStore
+): NormalizedLimitDecision {
+  const id = context.identity || context.ip;
+  const key = `${id}::${context.route}`;
+  const nowMs = context.nowMs;
+  const leakRate = config.refillRate;
+  const capacity = config.capacity;
+
+  let state = store.leakyBuckets.get(key);
+  if (!state) {
+    state = { waterLevel: 0, lastLeakMs: nowMs };
+  }
+
+  const elapsedMs = nowMs - state.lastLeakMs;
+  if (elapsedMs > 0 && leakRate > 0) {
+    state.waterLevel = Math.max(0, state.waterLevel - (elapsedMs * leakRate) / 1000);
+  }
+  state.lastLeakMs = nowMs;
+
+  const allowed = state.waterLevel < capacity;
+
+  if (allowed) {
+    state.waterLevel += 1;
+    state.lastSeenMs = nowMs;
+    store.leakyBuckets.set(key, state);
+
+    const remaining = Math.max(0, Math.floor(capacity - state.waterLevel));
+
+    return buildDecision(config, context, true, "within_limit", remaining, undefined, undefined, {
+      capacity,
+      refillRate: leakRate,
+    });
+  }
+
+  state.lastSeenMs = nowMs;
+  store.leakyBuckets.set(key, state);
+
+  let refillMs: number | undefined;
+  if (leakRate > 0) {
+    const excess = state.waterLevel - capacity;
+    refillMs = excess <= 0 ? 1 : Math.max(1, Math.ceil((excess / leakRate) * 1000));
+  }
+
+  return buildDecision(config, context, false, "limit_exceeded", 0, undefined, refillMs, {
+    capacity,
+    refillRate: leakRate,
   });
 }
 

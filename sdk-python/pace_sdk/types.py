@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional, Union
+from typing import Optional, Union, List, Callable
 from enum import Enum
 
 class ProtectionMode(str, Enum):
@@ -22,8 +22,6 @@ class DecisionReason(str, Enum):
     WITHIN_LIMIT = "within_limit"
     LIMIT_EXCEEDED = "limit_exceeded"
     TOKEN_EXHAUSTED = "token_exhausted"
-
-# REMOVED: LogMode Enum is no longer needed!
 
 @dataclass
 class CanonicalDecision:
@@ -54,6 +52,7 @@ class CanonicalTelemetryRequest:
     user_agent: Optional[str] = None
     key: Optional[str] = None
     mode: ProtectionMode = ProtectionMode.ACTIVE
+    request_id: Optional[str] = None
 
 @dataclass
 class CanonicalTelemetryEvent:
@@ -82,10 +81,9 @@ class PaceConfig:
     algorithm: Algorithm = Algorithm.TOKEN_BUCKET
     capacity: int = 100
     refill_rate: int = 10
-    # Unified debug setting: False, True, "compact", or "pretty"
     debug: Union[bool, str] = False
     identity_header: Optional[str] = None
-    backend_url: str = "http://localhost:4000"
+    backend_url: str = "http://localhost:4001"
     rules: Rules = field(default_factory=Rules)
     thresholds: Thresholds = field(default_factory=Thresholds)
 
@@ -95,3 +93,33 @@ class CheckResult:
     would_block: bool
     reason: Optional[str] = None
     decision: Optional[CanonicalDecision] = None
+
+@dataclass
+class TokenBucketConfig:
+    algorithm: Algorithm = Algorithm.TOKEN_BUCKET
+    capacity: int = 100
+    refill_rate: float = 10.0
+    key: Optional[Callable] = None
+
+@dataclass
+class FixedWindowConfig:
+    algorithm: Algorithm = Algorithm.FIXED_WINDOW
+    limit: int = 100
+    window: str = "1m"
+    key: Optional[Callable] = None
+
+@dataclass
+class SlidingWindowConfig:
+    algorithm: Algorithm = Algorithm.SLIDING_WINDOW
+    limit: int = 100
+    window: str = "1m"
+    key: Optional[Callable] = None
+
+@dataclass
+class LeakyBucketConfig:
+    algorithm: str = "leaky_bucket"
+    capacity: int = 100
+    refill_rate: float = 10.0
+    key: Optional[Callable] = None
+
+CheckConfig = Union[TokenBucketConfig, FixedWindowConfig, SlidingWindowConfig, LeakyBucketConfig]

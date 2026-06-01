@@ -8,6 +8,7 @@ test("multi-tenant keys isolate limiter state", () => {
   const store: LimitStateStore = {
     tokenBuckets: new Map(),
     fixedWindows: new Map(),
+    leakyBuckets: new Map(),
     slidingWindows: new Map(),
   };
 

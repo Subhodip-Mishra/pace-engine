@@ -1,38 +1,48 @@
-import time
-from pace_sdk import Pace, PaceConfig, ProtectionMode, Algorithm
+from pace_sdk import Pace, PaceConfig, ProtectionMode
+from pace_sdk.types import TokenBucketConfig, SlidingWindowConfig, FixedWindowConfig, LeakyBucketConfig
 
-# Initialize the core engine
-pace = Pace(PaceConfig(
-    mode=ProtectionMode.ACTIVE,
-    algorithm=Algorithm.TOKEN_BUCKET,
-    capacity=3,       
-    refill_rate=1.0,
-    debug="pretty" # Beautiful CLI observability out-of-the-box
-))
+pace = Pace(PaceConfig(mode=ProtectionMode.ACTIVE))
 
-print("🚀 Starting high-throughput engine test...")
-start = time.perf_counter()
+# ── Direct check ──────────────────────────────
+result = pace.check(
+    ip="127.0.0.1",
+    route="/api/generate",
+    config=TokenBucketConfig(capacity=10, refill_rate=1.0),
+)
+if result.allowed:
+    print("✅ allowed")
 
-# Test throughput with rich terminal logging
-for _ in range(100):
-    pace.check()  # Simulate 100 rapid requests to test the engine's performance and logging
+# ── FastAPI ───────────────────────────────────
+from fastapi import FastAPI, Depends, Request
 
-duration = time.perf_counter() - start
-print(f"✅ Processed 100 requests in {duration:.4f} seconds")
-print(f"🚀 Average time per request: {(duration / 100) * 1000:.4f} ms")
+app = FastAPI()
 
+@app.post("/api/generate", dependencies=[Depends(
+    pace.limit(SlidingWindowConfig(limit=100, window="1m"))
+)])
+async def generate():
+    return {"success": True}
 
-"""
-EXPECTED TERMINAL OUTPUT:
+# ── Flask ─────────────────────────────────────
+from flask import Flask
 
-│ IP:        127.0.0.1
-│ Algorithm: token_bucket
-│ Reason:    token_exhausted
-│ Mode:      active
-│ Remaining: 0
-│ Latency:   0ms
-└────────────────────────────────────────
+flask_app = Flask(__name__)
 
-✅ Processed 100 requests in 0.5778 seconds
-🚀 Average time per request: 0.0578 ms
-"""
+@flask_app.route("/api/generate", methods=["POST"])
+@pace.limit(TokenBucketConfig(capacity=10, refill_rate=1.0)).__decorator__
+def generate():
+    return {"success": True}
+
+# ── Leaky bucket ─────────────────────────────
+result = pace.check(
+    ip="127.0.0.1",
+    route="/api/upload",
+    config=LeakyBucketConfig(capacity=10, refill_rate=1.0),
+)
+print(result.allowed)
+
+# ── Django middleware ─────────────────────────
+# settings.py
+MIDDLEWARE = [
+    "pace_sdk.middleware.PaceDjangoMiddleware",
+]

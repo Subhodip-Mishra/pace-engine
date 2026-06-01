@@ -1,7 +1,8 @@
 import { spawn } from "child_process";
+import * as path from "node:path";
+import * as fs from "node:fs";
 
 let heartbeatProcess: any = null;
-
 
 export function startHeartbeat(config: {
   apiKey: string;
@@ -14,8 +15,23 @@ export function startHeartbeat(config: {
     return;
   }
 
-  const rustPath =
-    "/home/suvodeep-mishra/Desktop/pace-rate-limiter/packages/nodejs/src/heartbeat/target/debug/heartbeat";
+  const candidates = [
+    path.resolve(__dirname, "../../../src/heartbeat/target/debug/heartbeat"),
+    path.resolve(__dirname, "../../src/heartbeat/target/debug/heartbeat"),
+    path.resolve(__dirname, "../src/heartbeat/target/debug/heartbeat"),
+    "/home/suvodeep-mishra/Desktop/pace/sdk-node/src/heartbeat/target/debug/heartbeat"
+  ];
+
+  let rustPath = "";
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      rustPath = candidate;
+      break;
+    }
+  }
+  if (!rustPath) {
+    rustPath = candidates[candidates.length - 1];
+  }
 
   heartbeatProcess = spawn(rustPath, [
     config.apiKey,

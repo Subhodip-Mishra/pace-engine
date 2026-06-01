@@ -4,19 +4,39 @@
 	"title": "PaceCanonicalDecision",
 	"type": "object",
 	"additionalProperties": false,
-	"required": ["decision", "reason", "algorithm", "route", "mode", "timestamp"],
+	"required": [
+		"decision",
+		"reason",
+		"algorithm",
+		"route",
+		"mode",
+		"timestamp"
+	],
 	"properties": {
 		"decision": {
 			"type": "string",
-			"enum": ["allow", "block", "would_block"]
+			"enum": [
+				"allow",
+				"block",
+				"would_block"
+			]
 		},
 		"reason": {
 			"type": "string",
-			"enum": ["within_limit", "limit_exceeded", "token_exhausted"]
+			"enum": [
+				"within_limit",
+				"limit_exceeded",
+				"token_exhausted"
+			]
 		},
 		"algorithm": {
 			"type": "string",
-			"enum": ["sliding_window", "fixed_window", "token_bucket"]
+			"enum": [
+				"sliding_window",
+				"fixed_window",
+				"token_bucket",
+				"leaky_bucket"
+			]
 		},
 		"route": {
 			"type": "string",
@@ -40,7 +60,10 @@
 		},
 		"mode": {
 			"type": "string",
-			"enum": ["active", "shadow"]
+			"enum": [
+				"active",
+				"shadow"
+			]
 		},
 		"timestamp": {
 			"type": "integer",

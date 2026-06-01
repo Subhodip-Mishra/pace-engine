@@ -59,6 +59,18 @@ const wouldBlockDecision: NormalizedLimitDecision = {
   refillMs: 1000,
 };
 
+const leakyBucketDecision: NormalizedLimitDecision = {
+  decision: "allow",
+  reason: "within_limit",
+  algorithm: "leaky_bucket",
+  route: "/upload",
+  ip: "::1",
+  mode: "active",
+  timestamp: 1747500000,
+  remaining: 2,
+  latencyMs: 1,
+};
+
 test("compact logs stay single-line and concise", () => {
   const previousNoColor = process.env.NO_COLOR;
   process.env.NO_COLOR = "1";
@@ -97,4 +109,16 @@ test("noisy routes stay hidden", () => {
   assert.equal(shouldIgnoreRoute("/_next/static/chunks/app.js"), true);
   assert.equal(shouldIgnoreRoute("/health"), true);
   assert.equal(shouldIgnoreRoute("/login"), false);
+});
+
+test("leaky bucket decisions are loggable", () => {
+  const previousNoColor = process.env.NO_COLOR;
+  process.env.NO_COLOR = "1";
+
+  const logger = createPaceLogger("compact");
+  const output = captureStdout(() => logger.logDecision(leakyBucketDecision));
+
+  process.env.NO_COLOR = previousNoColor;
+
+  assert.equal(output, "[Pace] ALLOW route=/upload remaining=2 latency=1ms\n");
 });

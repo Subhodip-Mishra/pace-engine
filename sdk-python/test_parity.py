@@ -1,7 +1,7 @@
 import unittest
 
 from pace_sdk.client import Pace
-from pace_sdk.types import Algorithm, PaceConfig, ProtectionMode, Thresholds, TrafficDecision
+from pace_sdk.types import Algorithm, PaceConfig, ProtectionMode, Thresholds, TrafficDecision, LeakyBucketConfig
 
 
 class PaceParityTests(unittest.TestCase):
@@ -57,6 +57,12 @@ class PaceParityTests(unittest.TestCase):
 
         other_identity = pace.check_with_key("user-b", "127.0.0.1", "/login")
         self.assertTrue(other_identity.allowed)
+
+    def test_leaky_bucket_config_is_accepted(self):
+        pace = Pace(PaceConfig(mode=ProtectionMode.ACTIVE))
+
+        first = pace.check("127.0.0.1", "/upload", config=LeakyBucketConfig(capacity=1, refill_rate=1.0))
+        self.assertTrue(first.allowed)
 
 
 if __name__ == "__main__":
