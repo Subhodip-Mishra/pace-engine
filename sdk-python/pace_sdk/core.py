@@ -64,6 +64,63 @@ class Pace:
             config.backend_url
         )
 
+        self.active_algorithm = algo
+        self.active_requests_per_window = capacity
+        self.active_window_seconds = 60
+
+        if hasattr(config, "rules") and config.rules:
+            if getattr(config.rules, "requests_per_minute", None) is not None:
+                self.active_requests_per_window = config.rules.requests_per_minute
+                self.active_window_seconds = 60
+            elif getattr(config.rules, "requests_per_second", None) is not None:
+                self.active_requests_per_window = config.rules.requests_per_second
+                self.active_window_seconds = 1
+
+        if config.api_key:
+            import threading
+            t = threading.Thread(target=self._heartbeat_loop, daemon=True)
+            t.start()
+
+    def _heartbeat_loop(self):
+        import time
+        import requests
+
+        backend_url = self.config.backend_url or "http://localhost:4001"
+        api_key = self.config.api_key
+        mode = self.config.mode.value if hasattr(self.config.mode, "value") else str(self.config.mode)
+
+        start_time = time.time()
+
+        while True:
+            uptime = int(time.time() - start_time)
+            algorithm = str(self.active_algorithm)
+            payload = {
+                "apiKey": api_key,
+                "sdkVersion": "0.1.0",
+                "mode": mode,
+                "algorithm": algorithm,
+                "requestsLastMinute": "0",
+                "blockedLastMinute": "0",
+                "avgLatencyMs": "0",
+                "uptime": uptime,
+                "sdkConfig": {
+                    "algorithm": algorithm,
+                    "requestsPerWindow": int(self.active_requests_per_window),
+                    "windowSeconds": int(self.active_window_seconds),
+                    "mode": mode,
+                    "sdkVersion": "0.1.0"
+                }
+            }
+            try:
+                requests.post(
+                    f"{backend_url}/api/heartbeat",
+                    json=payload,
+                    timeout=5
+                )
+            except Exception:
+                pass
+            time.sleep(5)
+
     def limit(self, config: CheckConfig) -> PaceLimit:
         return PaceLimit(self, config)
 
@@ -76,12 +133,32 @@ class Pace:
     ) -> CheckResult:
         if config is not None:
             algo = _algorithm_value(config.algorithm)
+            window_seconds = 60
             if isinstance(config, (TokenBucketConfig, LeakyBucketConfig)):
                 capacity = float(config.capacity)
                 refill_rate = float(config.refill_rate)
             else:  # SlidingWindowConfig or FixedWindowConfig
                 capacity = float(config.limit)
                 refill_rate = 10.0  # default/dummy refill rate
+                window_str = getattr(config, "window", "1m")
+                if isinstance(window_str, str):
+                    import re
+                    match = re.match(r"^(\d+)([smhd])$", window_str)
+                    if match:
+                        val = int(match.group(1))
+                        unit = match.group(2)
+                        if unit == "s":
+                            window_seconds = val
+                        elif unit == "m":
+                            window_seconds = val * 60
+                        elif unit == "h":
+                            window_seconds = val * 3600
+                        elif unit == "d":
+                            window_seconds = val * 86400
+
+            self.active_algorithm = algo
+            self.active_requests_per_window = capacity
+            self.active_window_seconds = window_seconds
             
             debug_str = self.config.debug if isinstance(self.config.debug, str) else ("compact" if self.log_mode else None)
             engine = RustEngine(

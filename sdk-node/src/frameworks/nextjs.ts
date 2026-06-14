@@ -12,7 +12,11 @@ import { shouldIgnoreRoute } from "../core/logger";
 
 export function paceNext(pace: Pace, config: PaceLimitConfig) {
   return async (req: Request) => {
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "127.0.0.1";
+    const ip =
+      req.headers.get("cf-connecting-ip") ||
+      req.headers.get("x-real-ip") ||
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      "127.0.0.1";
     const url = new URL(req.url);
     const route = url.pathname;
 

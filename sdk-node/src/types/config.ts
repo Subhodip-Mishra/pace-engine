@@ -12,6 +12,9 @@ export interface PaceConfig {
   apiKey?: string;
   mode?: ProtectionMode;
   debug?: DebugMode;
+  algorithm?: Algorithm;
+  requestsPerWindow?: number;
+  windowSeconds?: number;
 }
 
 export interface CanonicalDecision {

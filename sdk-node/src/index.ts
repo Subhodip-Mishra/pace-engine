@@ -80,7 +80,10 @@ export class Pace {
         apiKey: options?.apiKey || "", 
         mode: this.getMode(), 
         algorithm: this.getAlgorithm(), 
-        sdkVersion: packageJson.version });
+        sdkVersion: packageJson.version,
+        requestsPerWindow: options?.requestsPerWindow ?? 100,
+        windowSeconds: options?.windowSeconds ?? 60,
+      });
       setInterval(() => {
         sendRuntimeMetrics({ 
           apiKey: options?.apiKey || "", 
@@ -93,7 +96,7 @@ export class Pace {
 
   public isConnected(): boolean { return !!this.options?.apiKey; }
   public getMode(): ProtectionMode { return this.options?.mode || "active"; }
-  private getAlgorithm(): Algorithm { return "token_bucket"; }
+  private getAlgorithm(): Algorithm { return this.options?.algorithm || "sliding_window"; }
 
   public buildTelemetryEvent(params: {
     decision: NormalizedLimitDecision;
@@ -128,6 +131,39 @@ export class Pace {
     route: string = "/",
     config: PaceLimitConfig
   ): NormalizedLimitDecision & { allowed: boolean } {
+    if (this.isConnected()) {
+      const limitAlgorithm = config.algorithm || "sliding_window";
+      let requestsPerWindow = 100;
+      let windowSeconds = 60;
+
+      if ("limit" in config) {
+        requestsPerWindow = (config as any).limit;
+      } else if ("capacity" in config) {
+        requestsPerWindow = (config as any).capacity;
+      }
+
+      if ("window" in config && typeof (config as any).window === "string") {
+        const match = (config as any).window.match(/^(\d+)([smhd])$/);
+        if (match) {
+          const val = parseInt(match[1], 10);
+          const unit = match[2];
+          if (unit === "s") windowSeconds = val;
+          else if (unit === "m") windowSeconds = val * 60;
+          else if (unit === "h") windowSeconds = val * 3600;
+          else if (unit === "d") windowSeconds = val * 86400;
+        }
+      }
+
+      startHeartbeat({
+        apiKey: this.options?.apiKey || "",
+        mode: this.getMode(),
+        algorithm: limitAlgorithm,
+        sdkVersion: packageJson.version,
+        requestsPerWindow,
+        windowSeconds,
+      });
+    }
+
     const start = Date.now();
     const mode = this.getMode();
 
@@ -165,7 +201,9 @@ export class Pace {
   public limit(config: PaceLimitConfig) {
     return (req: any, res: any, next: any) => {
       const ip =
-        (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
+        req.headers?.["cf-connecting-ip"] ||
+        req.headers?.["x-real-ip"] ||
+        (req.headers?.["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
         req.ip ||
         req.socket?.remoteAddress ||
         "127.0.0.1";

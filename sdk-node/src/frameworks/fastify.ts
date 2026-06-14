@@ -6,7 +6,12 @@ import { shouldIgnoreRoute } from "../core/logger";
 
 export function paceFastify(pace: Pace, config: PaceLimitConfig) {
   return async (request: any, reply: any) => {
-    const ip = request.ip || "127.0.0.1";
+    const ip =
+      request.headers?.["cf-connecting-ip"] ||
+      request.headers?.["x-real-ip"] ||
+      (request.headers?.["x-forwarded-for"] as string)?.split(",")[0]?.trim() ||
+      request.ip ||
+      "127.0.0.1";
     const route = request.routerPath || request.url;
 
     if (shouldIgnoreRoute(route)) return;

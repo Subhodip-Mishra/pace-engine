@@ -2,6 +2,17 @@ use serde::Serialize;
 use std::time::{Duration, Instant};
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct SDKConfig {
+    algorithm: String,
+    requestsPerWindow: i32,
+    windowSeconds: i32,
+    mode: String,
+    sdkVersion: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct HeartbeatPayload {
     apiKey: String,
     sdkVersion: String,
@@ -11,6 +22,7 @@ struct HeartbeatPayload {
     blockedLastMinute: String,
     avgLatencyMs: String,
     uptime: u64,
+    sdkConfig: SDKConfig,
 }
 
 #[tokio::main]
@@ -33,6 +45,14 @@ async fn main() {
 
     let avg_latency_ms = args.get(8).cloned().unwrap_or("0".to_string());
 
+    let req_per_window = args.get(9)
+        .and_then(|s| s.parse::<i32>().ok())
+        .unwrap_or(100);
+
+    let window_seconds = args.get(10)
+        .and_then(|s| s.parse::<i32>().ok())
+        .unwrap_or(60);
+
     let started_at = Instant::now();
 
     loop {
@@ -47,6 +67,13 @@ async fn main() {
             blockedLastMinute: blocked_last_minute.clone(),
             avgLatencyMs: avg_latency_ms.clone(),
             uptime,
+            sdkConfig: SDKConfig {
+                algorithm: algorithm.clone(),
+                requestsPerWindow: req_per_window,
+                windowSeconds: window_seconds,
+                mode: mode.clone(),
+                sdkVersion: sdk_version.clone(),
+            },
         };
 
         let client = reqwest::Client::new();

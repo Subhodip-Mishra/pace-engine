@@ -1,0 +1,21 @@
+name: Rust CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    name: Run Rust Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        
+      - name: Build & Run Cargo Tests
+        run: cargo test --manifest-path pace-engine/Cargo.toml
