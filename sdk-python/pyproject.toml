@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "pace-python"
-version = "1.0.5"
+version = "1.0.6"
 description = "Rust-powered rate limiting SDK for Python"
 readme = "README.md"
 license = { text = "Apache-2.0" }
