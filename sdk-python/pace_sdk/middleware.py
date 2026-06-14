@@ -12,7 +12,14 @@ def flask_middleware(pace: Pace):
         def wrapper(*args, **kwargs):
             from flask import jsonify, request
 
-            ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+            xff = request.headers.get("X-Forwarded-For")
+            ip = (
+                request.headers.get("CF-Connecting-IP")
+                or request.headers.get("X-Real-IP")
+                or (xff.split(",")[0].strip() if xff else None)
+                or request.remote_addr
+                or "127.0.0.1"
+            )
             identity = request.headers.get(pace.config.identity_header) if pace.config.identity_header else None
             result = pace.check_with_key(identity or "", ip, request.path)
             if not result.allowed:
@@ -37,8 +44,13 @@ class FastAPIMiddleware:
             from starlette.responses import JSONResponse
 
             request = Request(scope, receive)
-            ip = request.headers.get(
-                "x-forwarded-for", request.client.host if request.client else "unknown"
+            xff = request.headers.get("x-forwarded-for")
+            ip = (
+                request.headers.get("cf-connecting-ip")
+                or request.headers.get("x-real-ip")
+                or (xff.split(",")[0].strip() if xff else None)
+                or (request.client.host if request.client else None)
+                or "127.0.0.1"
             )
             identity = request.headers.get(self.pace.config.identity_header) if self.pace.config.identity_header else None
             result = self.pace.check_with_key(identity or "", ip, request.url.path)

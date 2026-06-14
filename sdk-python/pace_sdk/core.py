@@ -18,7 +18,14 @@ class PaceLimit:
         self.config = config
 
     def __call__(self, request):
-        ip = request.client.host if request.client else "127.0.0.1"
+        xff = request.headers.get("x-forwarded-for")
+        ip = (
+            request.headers.get("cf-connecting-ip")
+            or request.headers.get("x-real-ip")
+            or (xff.split(",")[0].strip() if xff else None)
+            or (request.client.host if request.client else None)
+            or "127.0.0.1"
+        )
         route = request.url.path
         result = self.pace.check(ip=ip, route=route, config=self.config)
         if not result.allowed:
@@ -30,7 +37,14 @@ class PaceLimit:
         @wraps(f)
         def wrapper(*args, **kwargs):
             from flask import jsonify, request
-            ip = request.headers.get("X-Forwarded-For", request.remote_addr) or request.remote_addr or "127.0.0.1"
+            xff = request.headers.get("X-Forwarded-For")
+            ip = (
+                request.headers.get("CF-Connecting-IP")
+                or request.headers.get("X-Real-IP")
+                or (xff.split(",")[0].strip() if xff else None)
+                or request.remote_addr
+                or "127.0.0.1"
+            )
             route = request.path
             result = self.pace.check(ip=ip, route=route, config=self.config)
             if not result.allowed:
