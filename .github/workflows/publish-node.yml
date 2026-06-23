@@ -53,7 +53,13 @@ jobs:
         with:
           node-version: 20
           registry-url: 'https://registry.npmjs.org'
-          
+
+      - run: npm install        # ← add karo
+        working-directory: sdk-node
+
+      - run: npm run build      # ← add karo
+        working-directory: sdk-node
+                    
       - run: npm publish --access public
         working-directory: sdk-node
         env:
