@@ -32,7 +32,7 @@ export async function sendRuntimeMetrics(config: {
             body: JSON.stringify(payload)
         });
 
-        console.log("Runtime metrics sent:", payload);
+        // console.log("Runtime metrics sent:", payload);
 
         runtimeMetrics.requests = 0;
         runtimeMetrics.blocked = 0;

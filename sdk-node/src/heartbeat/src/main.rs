@@ -86,11 +86,11 @@ async fn main() {
 
         match response {
             Ok(_) => {
-                println!("Heartbeat sent successfully")
+                // println!("Heartbeat sent successfully")
             }
 
             Err(error) => {
-                println!("Heartbeat failed to send: {}", error)
+                // println!("Heartbeat failed to send: {}", error)
             }
         }
         tokio::time::sleep(

@@ -65,32 +65,4 @@ export function startHeartbeat(config: {
     String(config.windowSeconds ?? 60),
   ]);
 
-  heartbeatProcess.stdout.on(
-    "data",
-    (data: Buffer) => {
-      console.log(
-        "[heartbeat]",
-        data.toString()
-      );
-    }
-  );
-
-  heartbeatProcess.stderr.on(
-    "data",
-    (data: Buffer) => {
-      console.error(
-        "[heartbeat error]",
-        data.toString()
-      );
-    }
-  );
-
-  heartbeatProcess.on(
-    "close",
-    (code: number) => {
-      console.log(
-        `[heartbeat exited]: ${code}`
-      );
-    }
-  );
 }

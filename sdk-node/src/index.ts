@@ -12,9 +12,9 @@ import { randomUUID } from "node:crypto";
 let paceNative: any = null;
 try {
   const nativeCandidates = [
-    path.resolve(__dirname, "../index.node"),
-    path.resolve(process.cwd(), "../../index.node"),
-    path.resolve(process.cwd(), "node_modules/pace-engine/index.node"),
+    path.resolve(__dirname, "../index.node"),                          // ✅ node_modules/pace-node/index.node
+    path.resolve(__dirname, "../../pace-node/index.node"),            // fallback
+    path.resolve(process.cwd(), "node_modules/pace-node/index.node"), // absolute
   ];
 
   for (const candidate of nativeCandidates) {

@@ -3,7 +3,7 @@ import type { CanonicalTelemetryEvent } from "../types/config";
 
 const queue: CanonicalTelemetryEvent[] = [];
 
-const MAX_QUEUE_SIZE = 10000;  // ← ADD
+const MAX_QUEUE_SIZE = 10000; 
 
 export function enqueueTelemetry(event: CanonicalTelemetryEvent) {
   if (!event.apiKey) return;
@@ -24,9 +24,9 @@ setInterval(async () => {
   try {
     await sendTelemetry(batch);
 
-    console.log(
-      `[Pace] Flushed ${batch.length} telemetry events`
-    );
+    // console.log(
+    //   `[Pace] Flushed ${batch.length} telemetry events`
+    // );
 
   } catch (error) {
     console.error(

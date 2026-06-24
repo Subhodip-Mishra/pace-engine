@@ -17,9 +17,9 @@ export async function sendTelemetry(
         body: JSON.stringify({ events }),
       }
     );
-    console.log(
-      `[Pace] Sent ${events.length} telemetry events`
-    );
+    // console.log(
+    //   `[Pace] Sent ${events.length} telemetry events`
+    // );
 
   } catch (error) {
     if (process.env.PACE_DEBUG) {
